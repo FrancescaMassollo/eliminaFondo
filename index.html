@@ -123,6 +123,18 @@
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     #btn-process { background: #eef2ff; border-color: #8899dd; color: #334eaa; }
     #btn-process:hover { background: #dde6ff; }
+    .dpi-btn {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px 16px; border: 1px solid #ddd; border-radius: 8px;
+      cursor: pointer; background: #fff; transition: all 0.15s;
+      min-width: 80px;
+    }
+    .dpi-btn:hover { background: #f5f5f0; border-color: #bbb; }
+    .dpi-btn.selected { background: #eef2ff; border-color: #6680cc; }
+    .dpi-num { font-size: 15px; font-weight: 600; color: #333; }
+    .dpi-btn.selected .dpi-num { color: #334eaa; }
+    .dpi-tip { font-size: 11px; color: #999; margin-top: 2px; white-space: nowrap; }
+    .dpi-btn.selected .dpi-tip { color: #6680cc; }
     #btn-download { background: #edfff4; border-color: #66bb88; color: #226644; }
     #btn-download:hover:not(:disabled) { background: #d8f5e8; }
     #status { font-size: 13px; color: #888; text-align: center; min-height: 20px; width: 100%; max-width: 620px; }
@@ -166,11 +178,30 @@
  
   <div class="card" id="controls" style="display:none;">
     <p class="card-label">Tamaño de salida</p>
-    <div class="row">
+    <div class="row" style="margin-bottom:14px;">
       <label>Ancho</label>
       <input type="range" id="cm-slider" min="1" max="30" value="6" step="0.5">
       <input type="number" id="cm-input" value="6" min="1" max="30" step="0.5">
       <span style="font-size:14px; color:#555;">cm</span>
+    </div>
+    <p style="font-size:12px; font-weight:500; color:#888; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;">Resolución (DPI)</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+      <div class="dpi-btn active" data-dpi="72">
+        <span class="dpi-num">72</span>
+        <span class="dpi-tip">Web y pantalla</span>
+      </div>
+      <div class="dpi-btn" data-dpi="150">
+        <span class="dpi-num">150</span>
+        <span class="dpi-tip">Impresión básica</span>
+      </div>
+      <div class="dpi-btn selected" data-dpi="300">
+        <span class="dpi-num">300</span>
+        <span class="dpi-tip">Imprenta profesional</span>
+      </div>
+      <div class="dpi-btn" data-dpi="600">
+        <span class="dpi-num">600</span>
+        <span class="dpi-tip">Alta precisión</span>
+      </div>
     </div>
     <p class="px-info" id="px-info">709 px de ancho · 300 DPI</p>
   </div>
@@ -249,11 +280,21 @@
     const cmInput = document.getElementById('cm-input');
     const tolSlider = document.getElementById('tol-slider');
     const tolVal = document.getElementById('tol-val');
+    let selectedDpi = 300;
+ 
+    document.querySelectorAll('.dpi-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dpi-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedDpi = parseInt(btn.dataset.dpi);
+        updatePxInfo();
+      });
+    });
  
     function updatePxInfo() {
       const cm = parseFloat(cmInput.value) || 6;
-      const px = Math.round(cm * 300 / 2.54);
-      document.getElementById('px-info').textContent = px + ' px de ancho · 300 DPI';
+      const px = Math.round(cm * selectedDpi / 2.54);
+      document.getElementById('px-info').textContent = px + ' px de ancho · ' + selectedDpi + ' DPI';
     }
     cmSlider.addEventListener('input', () => { cmInput.value = cmSlider.value; updatePxInfo(); });
     cmInput.addEventListener('input', () => { cmSlider.value = cmInput.value; updatePxInfo(); });
@@ -302,7 +343,7 @@
       const mode = document.querySelector('input[name="mode"]:checked').value;
       const cm = parseFloat(cmInput.value) || 6;
       const tol = parseInt(tolSlider.value) || 15;
-      const targetW = Math.round(cm * 300 / 2.54);
+      const targetW = Math.round(cm * selectedDpi / 2.54);
  
       status.textContent = 'Procesando...';
       document.getElementById('btn-process').disabled = true;
@@ -370,7 +411,7 @@ list(buf_out.read())
         imgEl.style.display = 'block';
         document.getElementById('result-placeholder').style.display = 'none';
         document.getElementById('btn-download').disabled = false;
-        status.textContent = `Listo · ${targetW}px de ancho · ${cm}cm a 300 DPI`;
+        status.textContent = `Listo · ${targetW}px de ancho · ${cm}cm a ${selectedDpi} DPI`;
       } catch(e) {
         status.textContent = 'Error: ' + e.message;
         console.error(e);
@@ -383,7 +424,7 @@ list(buf_out.read())
       const cm = parseFloat(cmInput.value) || 6;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(resultBlob);
-      a.download = origFilename + '_' + cm + 'cm_300dpi.png';
+      a.download = origFilename + '_' + cm + 'cm_' + selectedDpi + 'dpi.png';
       a.click();
     }
   </script>
