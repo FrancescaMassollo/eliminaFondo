@@ -279,9 +279,9 @@
  
     async function initPyodide() {
       try {
-        pyStatus.textContent = 'Cargando Python en el browser (solo la primera vez, ~10s)...';
+        pyStatus.textContent = 'Cargando Python en el browser (solo la primera vez, ~15s)...';
         pyodide = await loadPyodide();
-        await pyodide.loadPackage('Pillow');
+        await pyodide.loadPackage(['Pillow', 'numpy']);
         pyReady = true;
         pyStatus.textContent = '¡Python listo!';
         setTimeout(() => { pyStatus.style.display = 'none'; }, 2000);
