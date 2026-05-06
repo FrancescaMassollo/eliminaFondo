@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Removedor de fondo · 300 DPI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      width: 100%;
+      max-width: 620px;
+    }
+    .card-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 12px;
+    }
+    #drop-zone {
+      border: 1.5px dashed #bbb;
+      border-radius: 12px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      background: #fafaf7;
+      width: 100%;
+      max-width: 620px;
+      margin-bottom: 1rem;
+    }
+    #drop-zone:hover, #drop-zone.active { background: #eef4ff; border-color: #6699dd; }
+    #drop-zone i { font-size: 2rem; color: #999; display: block; margin-bottom: 0.5rem; }
+    #drop-zone .dz-title { font-size: 15px; font-weight: 500; }
+    #drop-zone .dz-sub { font-size: 13px; color: #888; margin-top: 4px; }
+    input[type=file] { display: none; }
+    .previews {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1rem;
+      width: 100%;
+      max-width: 620px;
+    }
+    .preview-box {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      border-radius: 10px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .preview-box .plabel { font-size: 11px; color: #999; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .preview-box img { max-width: 100%; max-height: 160px; border-radius: 4px; display: block; margin: 0 auto; }
+    #preview-result-wrap {
+      background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 12px 12px;
+      border-radius: 4px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #preview-result-wrap img { max-width: 100%; max-height: 160px; display: none; }
+    #result-placeholder { font-size: 12px; color: #aaa; }
+    .row { display: flex; align-items: center; gap: 12px; }
+    .row label { font-size: 14px; color: #555; white-space: nowrap; }
+    input[type=range] { flex: 1; height: 4px; accent-color: #4477cc; cursor: pointer; }
+    input[type=number] { width: 64px; text-align: center; padding: 6px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .px-info { font-size: 12px; color: #999; text-align: right; margin-top: 6px; }
+    .mode-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mode-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; cursor: pointer;
+      padding: 6px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .mode-label.active { background: #eef2ff; border-color: #6680cc; color: #334eaa; }
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; max-width: 620px; margin-bottom: 1rem; }
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    button:hover { background: #f0f0ee; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #btn-process { background: #eef2ff; border-color: #8899dd; color: #334eaa; }
+    #btn-process:hover { background: #dde6ff; }
+    #btn-download { display: none; }
+    #status { font-size: 13px; color: #888; text-align: center; min-height: 20px; width: 100%; max-width: 620px; }
+    #pyodide-status {
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      width: 100%;
+      max-width: 620px;
+    }
+  </style>
+</head>
+<body>
+ 
+  <h1>Removedor de fondo</h1>
+  <p class="subtitle">Eliminá el fondo de tu imagen y redimensionala a medidas físicas en cm · 300 DPI</p>
+ 
+  <div id="pyodide-status">Cargando Python en el browser (solo la primera vez)...</div>
+ 
+  <div id="drop-zone">
+    <i class="ti ti-upload"></i>
+    <p class="dz-title">Subí tu imagen</p>
+    <p class="dz-sub">PNG, JPG, WEBP · Hacé click o arrastrá</p>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+ 
+  <div class="previews" id="preview-block" style="display:none;">
+    <div class="preview-box">
+      <p class="plabel">Original</p>
+      <img id="preview-orig">
+    </div>
+    <div class="preview-box">
+      <p class="plabel">Resultado</p>
+      <div id="preview-result-wrap">
+        <img id="preview-result">
+        <span id="result-placeholder">Esperando...</span>
+      </div>
+    </div>
+  </div>
+ 
+  <div class="card" id="controls" style="display:none;">
+    <p class="card-label">Tamaño de salida</p>
+    <div class="row">
+      <label>Ancho</label>
+      <input type="range" id="cm-slider" min="1" max="30" value="6" step="0.5">
+      <input type="number" id="cm-input" value="6" min="1" max="30" step="0.5">
+      <span style="font-size:14px; color:#555;">cm</span>
+    </div>
+    <p class="px-info" id="px-info">709 px de ancho · 300 DPI</p>
+  </div>
+ 
+  <div class="card" id="controls2" style="display:none;">
+    <p class="card-label">Modo de remoción de fondo</p>
+    <div class="mode-options">
+      <label class="mode-label active">
+        <input type="radio" name="mode" value="solid" checked style="display:none;"> Fondo sólido
+      </label>
+      <label class="mode-label">
+        <input type="radio" name="mode" value="flood" style="display:none;"> Flood-fill (gradiente)
+      </label>
+    </div>
+    <div id="solid-opts">
+      <div class="row">
+        <label>Tolerancia</label>
+        <input type="range" id="tol-slider" min="0" max="80" value="15" step="1">
+        <span id="tol-val" style="font-size:14px; font-weight:500; min-width:28px;">15</span>
+      </div>
+      <p style="font-size:12px; color:#999; margin-top:6px;">Mayor tolerancia = elimina más colores similares al fondo</p>
+    </div>
+  </div>
+ 
+  <div class="buttons" id="action-buttons" style="display:none;">
+    <button id="btn-process" onclick="runProcess()">
+      <i class="ti ti-wand"></i> Procesar imagen
+    </button>
+    <button id="btn-download" onclick="downloadResult()">
+      <i class="ti ti-download"></i> Descargar PNG
+    </button>
+  </div>
+ 
+  <div id="status"></div>
+ 
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js"></script>
+  <script>
+    let pyodide = null;
+    let resultBlob = null;
+    let origFilename = 'imagen';
+    let pyReady = false;
+ 
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const status = document.getElementById('status');
+    const pyStatus = document.getElementById('pyodide-status');
+ 
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('active');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+ 
+    document.querySelectorAll('input[name="mode"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const isSolid = document.querySelector('input[name="mode"]:checked').value === 'solid';
+        document.getElementById('solid-opts').style.display = isSolid ? '' : 'none';
+        document.querySelectorAll('.mode-label').forEach(l => {
+          l.classList.toggle('active', l.querySelector('input').checked);
+        });
+      });
+    });
+ 
+    // Clicking mode labels
+    document.querySelectorAll('.mode-label').forEach(lbl => {
+      lbl.addEventListener('click', () => {
+        lbl.querySelector('input').checked = true;
+        lbl.querySelector('input').dispatchEvent(new Event('change', {bubbles:true}));
+      });
+    });
+ 
+    const cmSlider = document.getElementById('cm-slider');
+    const cmInput = document.getElementById('cm-input');
+    const tolSlider = document.getElementById('tol-slider');
+    const tolVal = document.getElementById('tol-val');
+ 
+    function updatePxInfo() {
+      const cm = parseFloat(cmInput.value) || 6;
+      const px = Math.round(cm * 300 / 2.54);
+      document.getElementById('px-info').textContent = px + ' px de ancho · 300 DPI';
+    }
+    cmSlider.addEventListener('input', () => { cmInput.value = cmSlider.value; updatePxInfo(); });
+    cmInput.addEventListener('input', () => { cmSlider.value = cmInput.value; updatePxInfo(); });
+    tolSlider.addEventListener('input', () => { tolVal.textContent = tolSlider.value; });
+    updatePxInfo();
+ 
+    function handleFile(file) {
+      origFilename = file.name.replace(/\.[^.]+$/, '');
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('preview-orig').src = e.target.result;
+        document.getElementById('preview-block').style.display = '';
+        document.getElementById('controls').style.display = '';
+        document.getElementById('controls2').style.display = '';
+        document.getElementById('action-buttons').style.display = '';
+        document.getElementById('btn-download').style.display = 'none';
+        document.getElementById('preview-result').style.display = 'none';
+        document.getElementById('result-placeholder').style.display = '';
+        document.getElementById('result-placeholder').textContent = 'Esperando...';
+        resultBlob = null;
+      };
+      reader.readAsDataURL(file);
+    }
+ 
+    async function initPyodide() {
+      try {
+        pyStatus.textContent = 'Cargando Python en el browser (solo la primera vez, ~10s)...';
+        pyodide = await loadPyodide();
+        await pyodide.loadPackage('Pillow');
+        pyReady = true;
+        pyStatus.textContent = '¡Python listo!';
+        setTimeout(() => { pyStatus.style.display = 'none'; }, 2000);
+      } catch(e) {
+        pyStatus.textContent = 'Error cargando Python: ' + e.message;
+      }
+    }
+    initPyodide();
+ 
+    async function runProcess() {
+      if (!document.getElementById('preview-orig').src || document.getElementById('preview-orig').src === window.location.href) {
+        status.textContent = 'Primero subí una imagen.'; return;
+      }
+      if (!pyReady) { status.textContent = 'Python todavía se está cargando, esperá un momento...'; return; }
+ 
+      const src = document.getElementById('preview-orig').src;
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const cm = parseFloat(cmInput.value) || 6;
+      const tol = parseInt(tolSlider.value) || 15;
+      const targetW = Math.round(cm * 300 / 2.54);
+ 
+      status.textContent = 'Procesando...';
+      document.getElementById('btn-process').disabled = true;
+ 
+      try {
+        const res = await fetch(src);
+        const buf = await res.arrayBuffer();
+        const uint8 = new Uint8Array(buf);
+        pyodide.globals.set('img_bytes', uint8);
+        pyodide.globals.set('target_w', targetW);
+        pyodide.globals.set('tolerance', tol);
+        pyodide.globals.set('mode', mode);
+ 
+        const code = `
+import io
+from PIL import Image
+import numpy as np
+ 
+data_in = bytes(img_bytes)
+img = Image.open(io.BytesIO(data_in)).convert("RGBA")
+data = np.array(img, dtype=np.int32)
+ 
+if mode == 'solid':
+    bg = data[0,0,:3]
+    diff = np.abs(data[:,:,:3] - bg).max(axis=2)
+    mask = (diff > tolerance).astype(np.uint8) * 255
+else:
+    h, w = data.shape[:2]
+    mask = np.ones((h,w), dtype=np.uint8) * 255
+    visited = np.zeros((h,w), dtype=bool)
+    from collections import deque
+    seeds = [(0,0),(0,w-1),(h-1,0),(h-1,w-1)]
+    queue = deque()
+    for sy,sx in seeds:
+        if not visited[sy,sx]:
+            visited[sy,sx] = True
+            queue.append((sy,sx))
+    bg_ref = data[0,0,:3].copy()
+    while queue:
+        y,x = queue.popleft()
+        if np.abs(data[y,x,:3]-bg_ref).max() <= tolerance:
+            mask[y,x] = 0
+            for dy,dx in [(-1,0),(1,0),(0,-1),(0,1)]:
+                ny,nx = y+dy,x+dx
+                if 0<=ny<h and 0<=nx<w and not visited[ny,nx]:
+                    visited[ny,nx] = True
+                    queue.append((ny,nx))
+ 
+data[:,:,3] = mask
+result = Image.fromarray(data.astype(np.uint8))
+scale = target_w / result.size[0]
+target_h = int(result.size[1] * scale)
+resized = result.resize((target_w, target_h), Image.LANCZOS)
+buf_out = io.BytesIO()
+resized.save(buf_out, format='PNG')
+buf_out.seek(0)
+list(buf_out.read())
+`;
+        const resultList = await pyodide.runPythonAsync(code);
+        const arr = new Uint8Array(resultList.toJs ? resultList.toJs() : resultList);
+        resultBlob = new Blob([arr], { type: 'image/png' });
+        const url = URL.createObjectURL(resultBlob);
+        const imgEl = document.getElementById('preview-result');
+        imgEl.src = url;
+        imgEl.style.display = 'block';
+        document.getElementById('result-placeholder').style.display = 'none';
+        document.getElementById('btn-download').style.display = '';
+        status.textContent = `Listo · ${targetW}px de ancho · ${cm}cm a 300 DPI`;
+      } catch(e) {
+        status.textContent = 'Error: ' + e.message;
+        console.error(e);
+      }
+      document.getElementById('btn-process').disabled = false;
+    }
+ 
+    function downloadResult() {
+      if (!resultBlob) return;
+      const cm = parseFloat(cmInput.value) || 6;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(resultBlob);
+      a.download = origFilename + '_' + cm + 'cm_300dpi.png';
+      a.click();
+    }
+  </script>
+</body>
+</html>
